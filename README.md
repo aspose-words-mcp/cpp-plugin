@@ -7,7 +7,8 @@ dependencies are standard-library only; this is an extraction worker, not an MCP
 ## Local verification (Windows PowerShell)
 
 ```powershell
-Set-Location 'C:\aspose-plugin-words-cpp'
+git clone https://github.com/aspose-words-mcp/cpp-plugin.git
+Set-Location cpp-plugin
 py -3.12 -m venv .venv
 $pluginPython = Join-Path $PWD '.venv/Scripts/python.exe'
 $env:PYTHONPATH = Join-Path $PWD 'src'
@@ -29,11 +30,11 @@ Do not change sources while ingestion is running.
 
 ```powershell
 New-Item -ItemType Directory -Force sources | Out-Null
-git clone --depth 1 --filter=blob:none --sparse --branch master https://github.com/aspose-words-mcp/aspose-words-docs.git sources/documentation-current
+git clone --depth 1 --filter=blob:none --sparse --branch master https://github.com/aspose-words-mcp/docs.git sources/documentation-current
 if ($LASTEXITCODE -ne 0) { throw 'Documentation clone failed.' }
 git -C sources/documentation-current sparse-checkout set en/cpp
 if ($LASTEXITCODE -ne 0) { throw 'Documentation sparse checkout failed.' }
-git clone --depth 1 --filter=blob:none --sparse --branch main https://github.com/aspose-words/Aspose.Words-API-References.git sources/api-reference
+git clone --depth 1 --filter=blob:none --sparse --branch main https://github.com/aspose-words-mcp/reference.git sources/api-reference
 if ($LASTEXITCODE -ne 0) { throw 'API clone failed.' }
 git -C sources/api-reference sparse-checkout set english/cpp
 if ($LASTEXITCODE -ne 0) { throw 'API sparse checkout failed.' }
@@ -63,8 +64,14 @@ records provenance. Extraction uses the cache offline. Missing/corrupt examples
 fail explicitly. Source checkouts must be clean. `--engine-schema` on the audit
 requires the engine environment and validates the response against its schema.
 
+## Continuous integration
+
+GitHub Actions runs the standalone plugin tests on pushes and pull requests with
+Python 3.12. The existing GitLab CI file is retained for GitLab mirrors.
+
 ## Engine integration
 
+Use the shared engine at https://github.com/aspose-core-mcp/context-engine.
 Add the absolute path to this checkout's `plugin.json` to the engine catalog's
 `plugins` array. From the engine repository, using its Python environment, run:
 
