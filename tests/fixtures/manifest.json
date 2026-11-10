@@ -1,0 +1,16 @@
+{
+  "document": "aspose.words/document",
+  "save": "aspose.words/document/save",
+  "constructor": "aspose.words/document/document",
+  "getter": "aspose.words/document/get_builtindocumentproperties",
+  "enum": "aspose.words/saveformat",
+  "template": "aspose.words/compositenode/appendchild",
+  "alias": "aspose.words/filecorruptedexception",
+  "interface": "aspose.words/idocumentreaderplugin",
+  "field": "aspose.words/controlchar/cellchar",
+  "watermark": "aspose.words/watermark/settext",
+  "pdf-options": "aspose.words.saving/pdfsaveoptions",
+  "mail-merge": "aspose.words.mailmerging/mailmerge/execute",
+  "template-member": "aspose.words.webextensions/basewebextensioncollection/add",
+  "template-alias": "aspose.words.webextensions/basewebextensioncollection/iterator"
+}

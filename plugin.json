@@ -1,0 +1,38 @@
+{
+  "contract": "adcs.extraction.v1",
+  "plugin_id": "aspose.words.cpp",
+  "version": "0.1.0",
+  "product_id": "aspose.words",
+  "language": "cpp",
+  "title": "Aspose.Words for C++",
+  "worker": [
+    "{python}",
+    "-I",
+    "{plugin_dir}/worker.py"
+  ],
+  "sources": {
+    "docs": {
+      "repo_id": "aspose.words.cpp.docs",
+      "path": "sources/documentation-current",
+      "prefix": "en/cpp",
+      "layout": {
+        "layout_type": "doc_locale/programming_language/content"
+      },
+      "canonical_base_url": "https://docs.aspose.com/words/cpp",
+      "url": "https://github.com/aspose-words-mcp/aspose-words-docs.git",
+      "branch": "master"
+    },
+    "apiref": {
+      "repo_id": "aspose.words.cpp.apiref",
+      "path": "sources/api-reference",
+      "prefix": "english/cpp",
+      "layout": {
+        "layout_type": "doc_locale/programming_language/namespace"
+      },
+      "canonical_base_url": "https://reference.aspose.com/words/cpp",
+      "url": "https://github.com/aspose-words/Aspose.Words-API-References.git",
+      "branch": "main"
+    }
+  },
+  "retrieval_profile": "retrieval-profile.json"
+}
