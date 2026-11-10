@@ -1,14 +1,22 @@
-# Aspose.Words for C++ extraction plugin
+# Aspose.Words for C++ Extraction Plugin
 
-Standalone repository for `aspose.words.cpp`, following the structure of the
-November `aspose-plugin-words-net` project. Python 3.12+ is required. Runtime
-dependencies are standard-library only; this is an extraction worker, not an MCP server.
+Prepare Aspose.Words for C++ documentation and API references for retrieval through the Aspose context engine and MCP server.
 
-## Local verification (Windows PowerShell)
+This Python package discovers Markdown sources, extracts documentation and C++ examples, produces chunks and structured API symbols, and supplies a declarative retrieval profile. Runtime dependencies are standard-library only. It is a one-request extraction worker, not an HTTP service or a C++ compiler.
+
+## Project family
+
+| Repository | Responsibility |
+| --- | --- |
+| [context-engine](https://github.com/aspose-core-mcp/context-engine) | Shared ingestion, indexing, retrieval, and MCP infrastructure |
+| [cpp-plugin](https://github.com/aspose-words-mcp/cpp-plugin) | Words C++ documentation/API extraction and retrieval configuration |
+| [cpp-server](https://github.com/aspose-words-mcp/cpp-server) | Deployment helpers combining pinned engine and plugin versions |
+
+## Quick start
+
+Requires Python 3.12 or newer; Git is needed to prepare source repositories and Gist examples. From an existing plugin checkout, run:
 
 ```powershell
-git clone https://github.com/aspose-words-mcp/cpp-plugin.git
-Set-Location cpp-plugin
 py -3.12 -m venv .venv
 $pluginPython = Join-Path $PWD '.venv/Scripts/python.exe'
 $env:PYTHONPATH = Join-Path $PWD 'src'
@@ -16,12 +24,21 @@ $env:PYTHONPATH = Join-Path $PWD 'src'
 if ($LASTEXITCODE -ne 0) { throw 'Plugin tests failed.' }
 ```
 
-Linux/CI: `PYTHONPATH=src python -m unittest discover -s tests -v`.
-The source launcher is `python -I worker.py`. It reads one JSON request from stdin
-and returns one `adcs.extraction.v1` response on stdout. It does not run a server.
-Install with `python -m pip install .`; the entry point is
-`adcs-words-cpp-extract`. Use the source checkout for engine integration: the
-wheel does not bundle the manifest, retrieval profile, or prepared Gist cache.
+Linux:
+
+```sh
+python3.12 -m venv .venv
+PYTHONPATH=src .venv/bin/python -m unittest discover -s tests -v
+```
+
+Tests use fixtures and do not require a running engine or indexed corpus. To obtain a standalone checkout, clone `https://github.com/aspose-words-mcp/cpp-plugin.git`. If using `cpp-server/plugins/words-cpp`, use that existing checkout instead.
+
+## Prepare real sources and integrate
+
+1. Download the sources declared in `plugin.json` using the instructions below.
+2. Prepare referenced Gist examples before extraction.
+3. Register the plugin with the context engine and validate extraction.
+4. Explicitly publish through the engine, then connect a client to the separately deployed MCP server.
 
 ## Download sources
 
@@ -29,6 +46,7 @@ Run from this repository root. Clone only when the target folders do not exist.
 Do not change sources while ingestion is running.
 
 ```powershell
+$env:GIT_LFS_SKIP_SMUDGE = '1' # Skip binary images during source checkout.
 New-Item -ItemType Directory -Force sources | Out-Null
 git clone --depth 1 --filter=blob:none --sparse --branch master https://github.com/aspose-words-mcp/docs.git sources/documentation-current
 if ($LASTEXITCODE -ne 0) { throw 'Documentation clone failed.' }
@@ -64,48 +82,52 @@ records provenance. Extraction uses the cache offline. Missing/corrupt examples
 fail explicitly. Source checkouts must be clean. `--engine-schema` on the audit
 requires the engine environment and validates the response against its schema.
 
-## Continuous integration
-
-GitHub Actions runs the standalone plugin tests on pushes and pull requests with
-Python 3.12. The existing GitLab CI file is retained for GitLab mirrors.
-
 ## Engine integration
 
-Use the shared engine at https://github.com/aspose-core-mcp/context-engine.
-Add the absolute path to this checkout's `plugin.json` to the engine catalog's
-`plugins` array. From the engine repository, using its Python environment, run:
+Use the [shared context engine](https://github.com/aspose-core-mcp/context-engine). Register the absolute path to `plugin.json` in its plugin catalog. Using the engine's Python environment:
 
 ```text
-python -m adcs.plugins.cli aspose.words.cpp --catalog <absolute-engine-catalog.json> --workspace <absolute-aspose-plugin-words-cpp> --python <absolute-plugin-python> --source-kind both --timeout 300
+python -m adcs.plugins.cli aspose.words.cpp --catalog <absolute-catalog.json> --workspace <absolute-plugin-checkout> --python <absolute-plugin-python> --source-kind both --timeout 300
 ```
 
-This validates; it does not publish. Add `--publish` only after configuring the
-engine's persistence, retrieval, and embedding services. The plugin does not
-provision Docker, clone sources automatically, or start an MCP endpoint. Configure
-the engine retrieval catalog to use this manifest when serving the profile.
-No engine catalog was changed while creating this standalone repository.
+This validates; add `--publish` only after configuring persistence, retrieval, and embeddings. The wheel does not provision stores, clone sources, or start an MCP endpoint.
 
-## Retrieval and platform behavior
+### Workspace when using cpp-server
 
-`retrieval-profile.json` scopes preferences to `aspose.words` / `cpp`, covering
-classic Mail Merge, Mail Merge regions, PDF export and watermarks. It follows the
-.NET profile schema but does not copy .NET-only LINQ/PDF-input preferences.
-The profile retains the baseline LowCode namespace exclusion for API retrieval.
-Native signatures retain `::`; engine lookup keys use dotted identifiers.
-Explicit foreign-language code examples are excluded. UTF-8 is explicit for the
-worker streams and Gist cache. AI and XLSX functionality are not disabled by the
-absence of profile ranking rules; generic retrieval remains available.
+The standalone download/audit commands above use the plugin directory as their workspace. The server's ingestion wrappers instead use `cpp-server/engine`. For the server, place source checkouts at `engine/sources/documentation-current` and `engine/sources/api-reference`, using the same source URLs, branches and sparse prefixes. Prepare Gists from the server root:
 
-## Extraction notes and scripts
+```powershell
+$env:PYTHONPATH = Join-Path $PWD 'plugins/words-cpp/src'
+& .\plugins\words-cpp\.venv\Scripts\python.exe -m adcs_words_cpp.gist_examples --source-root engine/sources/documentation-current/en/cpp --cache plugins/words-cpp/sources/gist-examples.json --resolve-history
+if ($LASTEXITCODE -ne 0) { throw 'Gist preparation failed.' }
+```
 
-See [docs/extraction-notes.md](docs/extraction-notes.md) for current source paths,
-audit scope, retrieval policy, and differences from the .NET constructor checker.
+The cache stays with the plugin. The standalone audit script expects plugin-local sources, not the server workspace.
 
-## Ownership and verification
+## Repository layout
 
-Derived from the existing October `plugins/words-cpp` implementation, with the
-November .NET repository as the structural baseline. Retain `LICENSE` attribution.
-`docs/legacy-extraction-notes.md` and `docs/legacy-verification.md` describe the
-original monorepo deployment; their old paths/results are historical, not fresh
-standalone ingestion evidence. See `docs/verification.md` for standalone checks.
-Sources, environments, credentials and generated artifacts are Git-ignored.
+| Path | Purpose |
+| --- | --- |
+| `plugin.json` | Identity, source locations, worker command and retrieval profile |
+| `worker.py` | Isolated source-checkout launcher |
+| `src/adcs_words_cpp/` | Parsing, extraction, normalization, chunking, symbols and Gist handling |
+| `retrieval-profile.json` | Product retrieval preferences and namespace exclusions |
+| `tests/` | Offline fixture-based regression tests |
+| `scripts/audit_sources.py` | Source-corpus audit |
+| `docs/` | Extraction notes and verification records |
+
+## Package installation
+
+```sh
+.venv/bin/python -m pip install .
+```
+
+The installed entry point is `adcs-words-cpp-extract`; alternatively use `python -I worker.py` from the checkout. Both accept one `adcs.extraction.v1` JSON request on stdin and emit one response. The distribution is `adcs-words-cpp-extractor`, the import namespace is `adcs_words_cpp`, and the plugin identity is `aspose.words.cpp`.
+
+Use a source checkout for engine integration: the wheel does not bundle the manifest, retrieval profile, downloaded corpora, or prepared Gist cache.
+
+## Development and license
+
+Run the regression commands above before changing extraction. Native signatures retain `::`; lookup identifiers use dots. Explicit foreign-language examples are excluded. See [extraction notes](docs/extraction-notes.md) for retrieval policy and audit scope. Historical verification records are not evidence of current ingestion.
+
+Licensed under [MIT](LICENSE), preserving Aspose Pty Ltd attribution. Downloaded documentation and examples retain their upstream terms and attribution. Sources, environments, credentials and generated artifacts are Git-ignored.
